@@ -1,0 +1,48 @@
+# Learning Tracker - Winget Package Manifest
+# Version: 2.0.0
+
+PackageIdentifier: LearningTracker.LearningTracker
+PackageVersion: 2.0.0
+PackageName: Learning Tracker
+Publisher: LearningTracker
+License: MIT
+LicenseUrl: https://github.com/phorens/Quissapp/blob/main/LICENSE
+ShortDescription: Track your learning progress with PDF monitoring and Anki flashcard integration
+Description: |
+  Learning Tracker is a desktop application that helps you monitor your daily learning progress.
+
+  Features:
+  - Automatic PDF tracking when you open files from monitored folders
+  - Manual PDF tracking with start/stop controls
+  - Create flashcards and export directly to Anki (.apkg format)
+  - Daily reminders at 9 AM, 2 PM, and 8 PM
+  - Statistics dashboard showing learning patterns
+  - SQLite database for persistent storage
+
+Tags:
+  - learning
+  - productivity
+  - education
+  - pdf
+  - flashcards
+  - anki
+  - study
+  - tracking
+
+Moniker: learning-tracker
+
+PackageUrl: https://github.com/phorens/Quissapp
+Author: LearningTracker
+PackageLocale: en-US
+MinimumOSVersion: 10.0.0.0
+
+Installers:
+  - Architecture: x64
+    InstallerType: portable
+    InstallerUrl: https://github.com/phorens/Quissapp/releases/download/v2.0.0/LearningTracker-v2.0.0.zip
+    InstallerSha256: <TO_BE_GENERATED>
+    Commands:
+      - learning-tracker
+
+ManifestType: singleton
+ManifestVersion: 1.0.0

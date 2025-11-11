@@ -65,6 +65,35 @@ if not exist "data" mkdir data
 if not exist "exports" mkdir exports
 echo.
 
+REM Ask if user wants to create desktop shortcut
+set /p create_shortcut="Do you want to create a desktop shortcut? (Y/N): "
+if /i "%create_shortcut%"=="Y" (
+    echo.
+    echo Creating desktop shortcut...
+    echo.
+
+    REM Get the current directory
+    set APP_DIR=%~dp0
+    set APP_DIR=%APP_DIR:~0,-1%
+    set DESKTOP=%USERPROFILE%\Desktop
+
+    REM Create VBScript to generate shortcut
+    echo Set oWS = WScript.CreateObject("WScript.Shell") > CreateShortcut.vbs
+    echo sLinkFile = "%DESKTOP%\Learning Tracker.lnk" >> CreateShortcut.vbs
+    echo Set oLink = oWS.CreateShortcut(sLinkFile) >> CreateShortcut.vbs
+    echo oLink.TargetPath = "%APP_DIR%\run_windows.bat" >> CreateShortcut.vbs
+    echo oLink.WorkingDirectory = "%APP_DIR%" >> CreateShortcut.vbs
+    echo oLink.Description = "Track your learning progress" >> CreateShortcut.vbs
+    echo oLink.IconLocation = "C:\Windows\System32\imageres.dll,98" >> CreateShortcut.vbs
+    echo oLink.Save >> CreateShortcut.vbs
+
+    cscript //nologo CreateShortcut.vbs
+    del CreateShortcut.vbs
+
+    echo Desktop shortcut created!
+    echo.
+)
+
 REM Ask if user wants to run the app now
 set /p run_now="Do you want to run the application now? (Y/N): "
 if /i "%run_now%"=="Y" (
@@ -73,7 +102,9 @@ if /i "%run_now%"=="Y" (
     python main.py
 ) else (
     echo.
-    echo You can run the application later using run_windows.bat
+    echo You can run the application later:
+    echo   - Double-click 'run_windows.bat'
+    echo   - Or use the desktop shortcut (if created)
 )
 
 echo.

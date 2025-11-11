@@ -5,10 +5,11 @@ A Python desktop application that helps you track your daily learning progress b
 ## Features
 
 ### PDF Tracking
-- Track time spent viewing PDF documents
-- Manual PDF tracking with start/stop controls
+- **🔍 Automatic PDF detection** - Monitor a folder and automatically track PDFs when opened
+- **✋ Manual tracking** - Start/stop tracking for any PDF file
 - View daily statistics and session history
 - See breakdown of time spent on each PDF
+- Persistent monitoring settings (remembers your folder)
 
 ### Flashcard Management
 - Create flashcards with front (question) and back (answer)
@@ -38,7 +39,13 @@ A Python desktop application that helps you track your daily learning progress b
 2. **Install Python** from [python.org](https://www.python.org/downloads/) (3.8 or higher)
    - ✓ Check "Add Python to PATH" during installation
 3. **Double-click `setup_windows.bat`** to install dependencies
-4. **Double-click `run_windows.bat`** to launch the app
+4. **Create desktop shortcut** (optional, prompted during setup)
+5. **Double-click `run_windows.bat`** or the desktop shortcut to launch
+
+**Winget Installation** (coming soon):
+```powershell
+winget install LearningTracker.LearningTracker
+```
 
 **Detailed instructions:** See [INSTALL_WINDOWS.md](INSTALL_WINDOWS.md)
 

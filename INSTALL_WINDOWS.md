@@ -91,7 +91,21 @@ You can also use the provided batch script for automatic setup:
 1. Navigate to the Quissapp folder in File Explorer
 2. Double-click `setup_windows.bat`
 3. Follow the prompts
-4. The application will launch automatically
+4. Choose whether to create a desktop shortcut
+5. The application will launch automatically
+
+### Creating a Desktop Shortcut
+
+To create a desktop shortcut for easy access:
+
+**Option 1:** During setup
+- The setup script will ask if you want to create a shortcut
+
+**Option 2:** Anytime after setup
+- Double-click `create_shortcut.bat` in the Quissapp folder
+- Or double-click `create_shortcut.vbs` for an alternative method
+
+The shortcut will appear on your desktop as "Learning Tracker"
 
 ## Running the Application
 
