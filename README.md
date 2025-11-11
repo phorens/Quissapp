@@ -28,13 +28,46 @@ A Python desktop application that helps you track your daily learning progress b
 - Monitor flashcard creation and export status
 - Historical data stored in SQLite database
 
+## Quick Start
+
+### Windows Users
+
+**Easy Installation (Recommended):**
+
+1. **Download this repository** as a ZIP file and extract it
+2. **Install Python** from [python.org](https://www.python.org/downloads/) (3.8 or higher)
+   - ✓ Check "Add Python to PATH" during installation
+3. **Double-click `setup_windows.bat`** to install dependencies
+4. **Double-click `run_windows.bat`** to launch the app
+
+**Detailed instructions:** See [INSTALL_WINDOWS.md](INSTALL_WINDOWS.md)
+
+### Linux/Mac Users
+
+1. Clone or download this repository
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Run the application:
+```bash
+python main.py
+```
+
 ## Installation
 
 ### Requirements
 - Python 3.8 or higher
 - pip (Python package manager)
 
-### Setup
+### Detailed Setup
+
+#### Windows
+See the comprehensive [Windows Installation Guide](INSTALL_WINDOWS.md) for step-by-step instructions, troubleshooting, and tips.
+
+#### Linux/Mac
 
 1. Clone or download this repository
 
