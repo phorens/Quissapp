@@ -25,9 +25,10 @@ class LearningTrackerGUI:
         self.flashcard_manager = flashcard_manager
         self.reminder_system = reminder_system
         self.pdf_monitor = pdf_monitor
+        self.tracking_update_scheduled = False
 
-        # Set update callback for PDF tracker
-        self.pdf_tracker.update_callback = self.update_tracking_display
+        # Set update callback for PDF tracker (thread-safe)
+        self.pdf_tracker.update_callback = self.schedule_tracking_update
 
         # Create main window
         self.root = tk.Tk()
@@ -644,48 +645,62 @@ Built with Python and Tkinter."""
         self.start_button.config(state='normal')
         self.stop_button.config(state='disabled')
 
+    def schedule_tracking_update(self):
+        """Schedule a tracking display update on the main thread (thread-safe)"""
+        if not self.tracking_update_scheduled:
+            self.tracking_update_scheduled = True
+            self.root.after(100, self._do_tracking_update)
+
+    def _do_tracking_update(self):
+        """Actually perform the tracking display update (runs on main thread)"""
+        self.tracking_update_scheduled = False
+        self.update_tracking_display()
+
     def update_tracking_display(self):
         """Update the tracking display with current information"""
-        status = self.pdf_tracker.get_current_status()
+        try:
+            status = self.pdf_tracker.get_current_status()
 
-        if status['is_tracking']:
-            self.tracking_status_label.config(
-                text=f"📖 Currently tracking: {status['pdf_name']}"
-            )
+            if status['is_tracking']:
+                self.tracking_status_label.config(
+                    text=f"📖 Currently tracking: {status['pdf_name']}"
+                )
 
-            # Format duration
-            seconds = status['duration_seconds']
-            hours = seconds // 3600
-            minutes = (seconds % 3600) // 60
-            secs = seconds % 60
+                # Format duration
+                seconds = status['duration_seconds']
+                hours = seconds // 3600
+                minutes = (seconds % 3600) // 60
+                secs = seconds % 60
 
-            self.tracking_time_label.config(
-                text=f"⏱️ {hours}:{minutes:02d}:{secs:02d}"
-            )
-        else:
-            self.tracking_status_label.config(text="No PDF being tracked")
-            self.tracking_time_label.config(text="⏱️ 0:00:00")
+                self.tracking_time_label.config(
+                    text=f"⏱️ {hours}:{minutes:02d}:{secs:02d}"
+                )
+            else:
+                self.tracking_status_label.config(text="No PDF being tracked")
+                self.tracking_time_label.config(text="⏱️ 0:00:00")
 
-        # Update today's stats
-        stats = self.database.get_daily_stats()
-        stats_text = (f"⏰ Total time: {stats['hours']}h {stats['minutes']}m  |  "
-                     f"📚 PDFs: {stats['unique_pdfs']}  |  "
-                     f"📊 Sessions: {stats['total_sessions']}")
-        self.today_stats_label.config(text=stats_text)
+            # Update today's stats
+            stats = self.database.get_daily_stats()
+            stats_text = (f"⏰ Total time: {stats['hours']}h {stats['minutes']}m  |  "
+                         f"📚 PDFs: {stats['unique_pdfs']}  |  "
+                         f"📊 Sessions: {stats['total_sessions']}")
+            self.today_stats_label.config(text=stats_text)
 
-        # Update PDF list
-        pdf_list = self.database.get_pdf_list_for_date()
-        self.pdf_list_text.delete('1.0', tk.END)
+            # Update PDF list
+            pdf_list = self.database.get_pdf_list_for_date()
+            self.pdf_list_text.delete('1.0', tk.END)
 
-        if pdf_list:
-            for pdf_name, total_seconds in pdf_list:
-                minutes = total_seconds // 60
-                hours = minutes // 60
-                mins = minutes % 60
-                self.pdf_list_text.insert(tk.END,
-                    f"📄 {pdf_name:<40} {hours}h {mins}m\n")
-        else:
-            self.pdf_list_text.insert(tk.END, "No PDFs viewed today")
+            if pdf_list:
+                for pdf_name, total_seconds in pdf_list:
+                    minutes = total_seconds // 60
+                    hours = minutes // 60
+                    mins = minutes % 60
+                    self.pdf_list_text.insert(tk.END,
+                        f"📄 {pdf_name:<40} {hours}h {mins}m\n")
+            else:
+                self.pdf_list_text.insert(tk.END, "No PDFs viewed today")
+        except Exception as e:
+            print(f"Error updating tracking display: {e}")
 
     def create_flashcard(self):
         """Create a new flashcard"""

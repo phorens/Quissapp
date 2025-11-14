@@ -87,9 +87,16 @@ class PDFTracker:
 
     def _tracking_loop(self):
         """Background loop that updates tracking status"""
-        while not self.stop_event.wait(timeout=1):
-            if self.update_callback:
-                self.update_callback()
+        try:
+            while self.is_tracking and not self.stop_event.wait(timeout=1):
+                if self.update_callback:
+                    try:
+                        self.update_callback()
+                    except Exception as e:
+                        print(f"Error in update callback: {e}")
+        except Exception as e:
+            print(f"Error in tracking loop: {e}")
+            self.is_tracking = False
 
     def get_current_duration(self) -> int:
         """Get current session duration in seconds
