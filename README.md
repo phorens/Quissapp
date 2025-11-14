@@ -29,6 +29,12 @@ A Python desktop application that helps you track your daily learning progress b
 - Monitor flashcard creation and export status
 - Historical data stored in SQLite database
 
+### Automatic Updates
+- **🔄 One-click updates** - Download and install updates from within the app
+- **Auto-check on startup** - Optionally check for new versions automatically
+- **Safe installation** - Your data and settings are never overwritten
+- **Progress tracking** - See real-time progress during installation
+
 ## Quick Start
 
 ### Windows Users

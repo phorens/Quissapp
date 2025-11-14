@@ -71,6 +71,9 @@ class LearningTrackerGUI:
         # Check if reminder needs to be shown
         self.root.after(1000, self.check_daily_reminder)
 
+        # Check for updates on startup (after 2 seconds to not block UI)
+        self.root.after(2000, self.check_for_updates_on_startup)
+
         # Load saved monitoring directory
         self.load_monitor_settings()
 
@@ -477,6 +480,67 @@ class LearningTrackerGUI:
         ttk.Button(btn_frame, text="✅ Mark as Checked",
                   command=self.mark_reminder_checked).pack(side='left')
 
+        # Updates section
+        update_frame = tk.Frame(container, bg=self.colors['card_bg'],
+                               relief='solid', borderwidth=1)
+        update_frame.pack(fill='x', pady=(0, 15))
+
+        update_inner = tk.Frame(update_frame, bg=self.colors['card_bg'])
+        update_inner.pack(fill='x', padx=20, pady=15)
+
+        tk.Label(update_inner, text="🔄 Automatic Updates",
+                font=('Segoe UI', 13, 'bold'),
+                bg=self.colors['card_bg'], fg=self.colors['fg']).pack(anchor='w', pady=(0, 10))
+
+        tk.Label(update_inner,
+                text="Keep your app up to date with the latest features and bug fixes",
+                font=('Segoe UI', 10),
+                bg=self.colors['card_bg'], fg='#7f8c8d').pack(anchor='w', pady=(0, 10))
+
+        # Current version
+        version_frame = tk.Frame(update_inner, bg='#ecf0f1', relief='flat')
+        version_frame.pack(fill='x', pady=(0, 10))
+
+        version_inner = tk.Frame(version_frame, bg='#ecf0f1')
+        version_inner.pack(padx=15, pady=10)
+
+        tk.Label(version_inner, text="Current Version:",
+                font=('Segoe UI', 10),
+                bg='#ecf0f1', fg=self.colors['fg']).pack(side='left')
+
+        self.version_label = tk.Label(version_inner, text="v2.0.0",
+                                      font=('Segoe UI', 10, 'bold'),
+                                      bg='#ecf0f1', fg=self.colors['primary'])
+        self.version_label.pack(side='left', padx=(10, 0))
+
+        # Update status
+        self.update_status_label = tk.Label(update_inner, text="",
+                                           font=('Segoe UI', 9),
+                                           bg=self.colors['card_bg'], fg='#7f8c8d')
+        self.update_status_label.pack(anchor='w', pady=(0, 10))
+
+        # Update buttons
+        update_btn_frame = tk.Frame(update_inner, bg=self.colors['card_bg'])
+        update_btn_frame.pack(anchor='w')
+
+        ttk.Button(update_btn_frame, text="🔍 Check for Updates",
+                  command=self.check_for_updates).pack(side='left', padx=(0, 10))
+
+        # Auto-check toggle
+        self.auto_update_var = tk.BooleanVar(value=True)
+        self.auto_update_check = tk.Checkbutton(update_btn_frame,
+                                                text="Check automatically on startup",
+                                                variable=self.auto_update_var,
+                                                command=self.toggle_auto_update,
+                                                font=('Segoe UI', 9),
+                                                bg=self.colors['card_bg'],
+                                                fg=self.colors['fg'],
+                                                selectcolor='#ecf0f1')
+        self.auto_update_check.pack(side='left')
+
+        # Load auto-update setting
+        self.load_auto_update_setting()
+
         # About
         about_frame = tk.Frame(container, bg=self.colors['card_bg'],
                               relief='solid', borderwidth=1)
@@ -766,6 +830,187 @@ Built with Python and Tkinter."""
             )
             if response:
                 self.reminder_system.mark_checked()
+
+    def load_auto_update_setting(self):
+        """Load auto-update setting from updater"""
+        try:
+            from updater import UpdateChecker
+            updater = UpdateChecker()
+            settings = updater.get_update_settings()
+            self.auto_update_var.set(settings.get("auto_check", True))
+        except:
+            pass
+
+    def toggle_auto_update(self):
+        """Toggle auto-update setting"""
+        try:
+            from updater import UpdateChecker
+            updater = UpdateChecker()
+            settings = updater.get_update_settings()
+            settings["auto_check"] = self.auto_update_var.get()
+            updater.save_update_settings(settings)
+        except:
+            pass
+
+    def check_for_updates(self):
+        """Check for app updates"""
+        self.update_status_label.config(text="🔍 Checking for updates...", fg='#7f8c8d')
+        self.root.update()
+
+        try:
+            from updater import UpdateChecker
+            updater = UpdateChecker()
+
+            update_info = updater.check_for_updates()
+
+            if update_info:
+                # Update available
+                self.update_status_label.config(
+                    text=f"✨ Update available: v{update_info['version']}",
+                    fg=self.colors['success']
+                )
+
+                # Ask user if they want to install
+                response = messagebox.askyesno(
+                    "Update Available",
+                    f"A new version is available!\n\n"
+                    f"Current: v{updater.get_current_version()}\n"
+                    f"Latest: v{update_info['version']}\n\n"
+                    f"Release Notes:\n{update_info['release_notes'][:200]}...\n\n"
+                    f"Would you like to install this update now?\n\n"
+                    f"(The app will restart after installation)"
+                )
+
+                if response:
+                    self.install_update(update_info)
+            else:
+                # No update available
+                self.update_status_label.config(
+                    text="✅ You're running the latest version!",
+                    fg=self.colors['success']
+                )
+                messagebox.showinfo("No Updates",
+                                   f"You're already running the latest version (v{updater.get_current_version()})")
+
+        except Exception as e:
+            self.update_status_label.config(
+                text=f"❌ Update check failed: {str(e)}",
+                fg=self.colors['danger']
+            )
+            messagebox.showerror("Update Check Failed",
+                               f"Failed to check for updates:\n{str(e)}\n\n"
+                               f"Please check your internet connection.")
+
+    def install_update(self, update_info):
+        """Install an update"""
+        # Create progress dialog
+        progress_dialog = tk.Toplevel(self.root)
+        progress_dialog.title("Installing Update")
+        progress_dialog.geometry("400x150")
+        progress_dialog.resizable(False, False)
+        progress_dialog.transient(self.root)
+        progress_dialog.grab_set()
+
+        # Center the dialog
+        progress_dialog.update_idletasks()
+        x = (progress_dialog.winfo_screenwidth() // 2) - (400 // 2)
+        y = (progress_dialog.winfo_screenheight() // 2) - (150 // 2)
+        progress_dialog.geometry(f"400x150+{x}+{y}")
+
+        tk.Label(progress_dialog, text="Installing update...",
+                font=('Segoe UI', 12, 'bold')).pack(pady=20)
+
+        progress_label = tk.Label(progress_dialog, text="Preparing...",
+                                 font=('Segoe UI', 10))
+        progress_label.pack()
+
+        from tkinter import ttk as tkttk
+        progress_bar = tkttk.Progressbar(progress_dialog, length=350,
+                                        mode='determinate')
+        progress_bar.pack(pady=20)
+
+        def update_progress(percentage):
+            """Update progress bar"""
+            progress_bar['value'] = percentage
+            if percentage < 40:
+                progress_label.config(text="Downloading update...")
+            elif percentage < 80:
+                progress_label.config(text="Extracting files...")
+            elif percentage < 95:
+                progress_label.config(text="Installing files...")
+            else:
+                progress_label.config(text="Finalizing...")
+            progress_dialog.update()
+
+        # Install update in background
+        def do_install():
+            try:
+                from updater import UpdateChecker
+                updater = UpdateChecker()
+
+                success, message = updater.download_and_install_update(
+                    update_info['download_url'],
+                    progress_callback=update_progress
+                )
+
+                progress_dialog.destroy()
+
+                if success:
+                    result = messagebox.showinfo("Update Complete",
+                                                f"{message}\n\n"
+                                                f"The application will now close.\n"
+                                                f"Please restart it to use the new version.")
+                    # Close the app
+                    self.root.quit()
+                else:
+                    messagebox.showerror("Update Failed", message)
+                    self.update_status_label.config(
+                        text="❌ Update installation failed",
+                        fg=self.colors['danger']
+                    )
+
+            except Exception as e:
+                progress_dialog.destroy()
+                messagebox.showerror("Update Failed",
+                                   f"Failed to install update:\n{str(e)}")
+                self.update_status_label.config(
+                    text="❌ Update installation failed",
+                    fg=self.colors['danger']
+                )
+
+        # Run installation in thread to keep UI responsive
+        import threading
+        install_thread = threading.Thread(target=do_install, daemon=True)
+        install_thread.start()
+
+    def check_for_updates_on_startup(self):
+        """Check for updates on startup if enabled"""
+        try:
+            from updater import UpdateChecker
+            updater = UpdateChecker()
+
+            if updater.should_check_for_updates():
+                update_info = updater.check_for_updates()
+
+                if update_info:
+                    response = messagebox.askyesno(
+                        "🎉 Update Available",
+                        f"A new version of Learning Tracker is available!\n\n"
+                        f"Current: v{updater.get_current_version()}\n"
+                        f"Latest: v{update_info['version']}\n\n"
+                        f"Would you like to view the updates section?"
+                    )
+
+                    if response:
+                        # Switch to settings tab
+                        self.notebook.select(3)  # Settings is the 4th tab
+                        self.update_status_label.config(
+                            text=f"✨ Update available: v{update_info['version']}",
+                            fg=self.colors['success']
+                        )
+        except:
+            # Silently fail - don't bother user on startup
+            pass
 
     def run(self):
         """Run the GUI application"""
