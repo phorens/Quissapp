@@ -104,16 +104,19 @@ class UpdateChecker:
                 'release_notes': 'What's new...',
                 'published_at': '2025-11-14T...'
             }
+
+        Raises:
+            Exception: If update check fails (network, API, etc.)
         """
         if not URLLIB_AVAILABLE:
-            return None
+            raise Exception("urllib not available - network functionality disabled")
+
+        # Update last check time
+        settings = self.get_update_settings()
+        settings["last_check"] = datetime.now().isoformat()
+        self.save_update_settings(settings)
 
         try:
-            # Update last check time
-            settings = self.get_update_settings()
-            settings["last_check"] = datetime.now().isoformat()
-            self.save_update_settings(settings)
-
             # Fetch latest release info
             req = urllib.request.Request(self.github_api_url)
             req.add_header('User-Agent', 'LearningTracker-UpdateChecker')
@@ -122,6 +125,10 @@ class UpdateChecker:
                 data = json.loads(response.read().decode())
 
             latest_version = data.get('tag_name', '').lstrip('v')
+
+            # If no tag_name, there might be no releases
+            if not latest_version:
+                raise Exception("No releases found on GitHub. Create a release first.")
 
             # Compare versions
             if self._is_newer_version(latest_version, self.current_version):
@@ -148,11 +155,17 @@ class UpdateChecker:
         except urllib.error.HTTPError as e:
             if e.code == 404:
                 # No releases yet
-                return None
-            raise
+                raise Exception(f"No releases found on GitHub repository: {self.repo_owner}/{self.repo_name}.\n\nCreate a release to enable updates.")
+            elif e.code == 403:
+                raise Exception("GitHub API rate limit exceeded. Try again in an hour.")
+            else:
+                raise Exception(f"GitHub API error {e.code}: {e.reason}")
+        except urllib.error.URLError as e:
+            raise Exception(f"Network error: {e.reason}. Check your internet connection.")
+        except json.JSONDecodeError as e:
+            raise Exception(f"Invalid response from GitHub API: {e}")
         except Exception as e:
-            print(f"Update check failed: {e}")
-            return None
+            raise Exception(f"Update check failed: {str(e)}")
 
     def _is_newer_version(self, latest: str, current: str) -> bool:
         """Compare version strings
